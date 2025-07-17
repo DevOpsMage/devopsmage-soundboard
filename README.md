@@ -1,197 +1,262 @@
-### **Technical Specification: Dynamic Soundboard Application**
+# Soundboard Application
 
-**Project:** Soundboard Web App  
-**Version:** 5.1 (Final Handoff)  
-**Date:** July 16, 2025
+A full-stack Next.js soundboard application with TypeScript, shadcn/ui components, and Tailwind CSS. The app provides both a public soundboard interface and a password-protected admin interface for content management.
 
-#### **1. Project Overview & Core Objective**
+## Features
 
-The objective is to build a modern, full-stack soundboard application using the Next.js framework. The application will serve two primary frontends: a public-facing soundboard for playing audio clips and a password-protected administration interface for content management. The application's theme colors and server port will be configurable via environment variables. The final product is intended for online hosting and embedding within a Notion page.
+- 🎵 **Interactive Soundboard**: Play audio clips organized by categories
+- 🔒 **Admin Interface**: Password-protected admin panel for managing sounds
+- 📁 **File Management**: Upload and organize audio files through the admin interface
+- 🎨 **Customizable Theming**: Environment-based color customization
+- 🔐 **Secure Authentication**: JWT-based session management with HTTP-only cookies
+- 📱 **Responsive Design**: Works on desktop and mobile devices
+- 🐳 **Docker Support**: Easy deployment with Docker and Docker Compose
 
-#### **2. Important Architectural & Deployment Notes**
+## Tech Stack
 
-  * **Full-Stack Next.js:** The application will be a monolithic Next.js project. The backend logic will be implemented as API Routes, and the frontend will be built with React components.
-  * **Filesystem as Database:** The application will use a `sounds.yaml` file on the server's filesystem as its "database." All content changes will be written directly to this file.
-  * **Deployment & Persistent Storage:** The choice of hosting environment is critical. The platform **must support a persistent filesystem** for the API routes to save uploaded audio files and `sounds.yaml` modifications. Standard Vercel deployments have an ephemeral filesystem, which is **incompatible** with this requirement. The development team must plan for a hosting solution that provides persistence (e.g., a Docker container on a VPS, or a service with persistent volume mounts).
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui + Radix UI
+- **Authentication**: JWT with HTTP-only cookies
+- **Database**: Filesystem-based (sounds.yaml)
+- **Audio Storage**: Local file system
 
------
+## Quick Start with Docker
 
-#### **3. Technical Stack**
+The easiest way to run the application is using Docker Compose:
 
-  * **Framework:** Next.js (using the App Router)
-  * **Language:** TypeScript
-  * **UI Components:** **shadcn/ui**
-  * **Styling:** Tailwind CSS
-  * **Configuration Parsing:** `yaml` (for server-side parsing of `sounds.yaml`)
-  * **Environment Variables:** `.env.local`
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd soundboard
 
------
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your configuration
 
-#### **4. Key Features & Requirements**
+# Start the application
+docker-compose up -d
 
-##### **4.1. Backend (Next.js API Routes)**
-
-All backend logic will reside in API Route Handlers within the `/app/api/` directory.
-
-  * **API Endpoints:**
-      * `GET /api/config`: Reads `sounds.yaml`, parses it, and returns the configuration as a JSON object.
-      * `POST /api/config`: An admin-protected route that receives a JSON object. **Action:** Creates a backup of the current `sounds.yaml` (e.g., `sounds.yaml.bak`), converts the received JSON to YAML, and overwrites the `sounds.yaml` file.
-      * `GET /api/audio-files`: Returns a JSON list of all filenames in the `/public/audio/` directory.
-      * `POST /api/upload`: An admin-protected route that handles `multipart/form-data` for `.flac` file uploads. It should sanitize filenames and save them to the `/public/audio/` directory.
-      * `DELETE /api/audio-files`: An admin-protected route that accepts a filename in the request body and deletes the corresponding file from the `/public/audio/` directory.
-  * **Security:** Admin-related API routes must be protected. This can be implemented in a middleware or directly within each route handler by validating a password sent in the request headers against a server-side `ADMIN_PASSWORD` environment variable.
-
-##### **4.2. Frontend: Public Soundboard UI (React Page)**
-
-This is the main, user-facing interface, built as a React page component.
-
-  * **Component Structure:** The UI will be composed using **shadcn/ui** components (e.g., `Card` for categories, `Button` for sounds, `Slider` for volume).
-  * **Dynamic Layout:** The page will fetch data from `GET /api/config` using a client-side hook (e.g., `useEffect` or a data-fetching library like SWR/TanStack Query) to dynamically render the categories and sound buttons.
-  * **Playback Controls:**
-      * **Global Volume:** A single `Slider` component controls the volume for all sounds. Its state will be managed in a parent component or a React Context.
-      * **Global Stop:** A `Button` component that, when clicked, stops all active audio playback.
-
-##### **4.3. Frontend: Administration UI (React Page)**
-
-A separate, protected page for managing the soundboard's content.
-
-  * **Authentication:** Access to this page will be controlled. A simple approach is a client-side modal that prompts for the admin password, which is then stored in memory for subsequent API requests.
-  * **Dashboard Layout:** The UI will be built with **shadcn/ui** components, featuring `Tabs` to switch between "Manage Layout" and "Manage Audio Files."
-  * **File Management (`TabsContent`):**
-      * Displays a list of available audio files.
-      * Provides a "Delete" button next to each file, which triggers a `Dialog` for confirmation before calling the `DELETE` API route.
-      * Includes a file upload component using `Input type="file"` that posts to the `/api/upload` route.
-  * **Layout Management (`TabsContent`):**
-      * Visually renders the current layout.
-      * Uses components like `Accordion` for categories and `dnd-kit` (or similar) for drag-and-drop reordering of categories and sounds.
-      * Provides `Dialog` or `Sheet` components for adding/editing categories and sounds. The form within should use a `Select` component (populated with available audio files) to assign a sound to a button.
-      * A primary "Save Layout" `Button` that sends the updated configuration to the `POST /api/config` route.
-
-##### **4.4. Configurable Environment**
-
-The application's core settings will be configurable via environment variables.
-
-  * **Environment Variables (`.env.local`):**
-    ```
-    # Server Configuration
-    PORT=3000
-    ADMIN_PASSWORD="your-secret-password"
-
-    # Public Theme Variables
-    NEXT_PUBLIC_PRIMARY_COLOR="hsl(222.2 47.4% 11.2%)"
-    NEXT_PUBLIC_BACKGROUND_COLOR="hsl(0 0% 100%)"
-    NEXT_PUBLIC_CARD_COLOR="hsl(240 5.9% 90%)"
-    NEXT_PUBLIC_TEXT_COLOR="hsl(222.2 84% 4.9%)"
-    ```
-  * **Port Configuration:** The `package.json` `dev` script should be updated to respect the `PORT` variable: `"dev": "next dev -p $PORT"`. The production `start` script (`next start`) will respect the `PORT` variable automatically.
-  * **Theming Implementation:** In the root layout (`/app/layout.tsx`), the public theme variables will be used to define CSS variables on the `:root` element. Tailwind CSS's configuration (`tailwind.config.js`) will then be set up to use these CSS variables, allowing the entire shadcn/ui component set to adopt the theme.
-
------
-
-#### **5. Suggested Project Structure (Next.js App Router)**
-
-```
-/soundboard-app
-|-- /app
-|   |-- /api                  // Backend API Routes
-|   |   |-- /config
-|   |   |-- /upload
-|   |   |-- ...
-|   |-- /admin                // Admin page route
-|   |   |-- page.tsx
-|   |-- /components           // Reusable React components
-|   |   |-- /ui               // shadcn/ui components live here
-|   |-- layout.tsx            // Root layout (for theming)
-|   |-- page.tsx              // Public soundboard page
-|-- /public
-|   |-- /audio                // Uploaded .flac files
-|-- sounds.yaml               // The configuration file
-|-- .env.local                // For passwords, ports, and theme colors
-|-- .gitignore
-|-- next.config.mjs
-|-- package.json
-|-- tailwind.config.ts
-|-- tsconfig.json
+# Access the application
+# Public soundboard: http://localhost:3000
+# Admin interface: http://localhost:3000/admin
 ```
 
------
+## Manual Installation
 
-#### **6. Error Codes & Troubleshooting**
+### Prerequisites
 
-The application uses a structured error code system to help with debugging and issue tracking. All API responses follow a consistent format with numerical error codes for precise error identification.
+- Node.js 18+ 
+- npm or yarn
 
-##### **6.1. Error Response Format**
+### Setup
 
-All API endpoints return errors in the following format:
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": 1001,
-    "message": "Invalid admin password"
-  }
-}
+2. **Configure environment variables**:
+   Create a `.env.local` file with the following variables:
+   ```bash
+   PORT=3000
+   ADMIN_PASSWORD="your-secret-password"
+   NEXT_PUBLIC_PRIMARY_COLOR="hsl(222.2 47.4% 11.2%)"
+   NEXT_PUBLIC_BACKGROUND_COLOR="hsl(0 0% 100%)"
+   NEXT_PUBLIC_CARD_COLOR="hsl(240 5.9% 90%)"
+   NEXT_PUBLIC_TEXT_COLOR="hsl(222.2 84% 4.9%)"
+   ```
+
+3. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+
+4. **Access the application**:
+   - Public soundboard: [http://localhost:3000](http://localhost:3000)
+   - Admin interface: [http://localhost:3000/admin](http://localhost:3000/admin)
+
+## Production Deployment
+
+### Docker Deployment (Recommended)
+
+The application is designed for deployment with persistent filesystem support:
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Or build manually
+docker build -t soundboard .
+docker run -p 3000:3000 \
+  -v $(pwd)/sounds.yaml:/app/sounds.yaml \
+  -v $(pwd)/public/audio:/app/public/audio \
+  -e ADMIN_PASSWORD="your-password" \
+  soundboard
 ```
 
-##### **6.2. Error Code Categories**
+### Important Deployment Notes
 
-**Authentication Errors (1000-1099)**
+⚠️ **Critical**: This application requires persistent filesystem support. Standard Vercel deployments will NOT work due to the ephemeral filesystem. The app needs to persist:
+- `sounds.yaml` configuration file
+- Audio files in `/public/audio/`
 
-| Code | Error | Description | Resolution |
-|------|-------|-------------|------------|
-| 1001 | `INVALID_PASSWORD` | The provided admin password is incorrect | Verify the password matches the `ADMIN_PASSWORD` environment variable |
-| 1002 | `MISSING_PASSWORD` | No password was provided in the request | Include the password in the request body or headers |
+Consider using:
+- Docker on VPS/dedicated servers
+- Railway, Render, or similar platforms with persistent storage
+- Self-hosted solutions
 
-**File Errors (1100-1199)**
+### Manual Production Build
 
-| Code | Error | Description | Resolution |
-|------|-------|-------------|------------|
-| 1101 | `FILE_NOT_FOUND` | The requested file does not exist | Verify the file exists in the `/public/audio/` directory |
-| 1102 | `FILE_TOO_LARGE` | The uploaded file exceeds the size limit | Reduce file size or increase `MAX_FILE_SIZE` in environment variables |
-| 1103 | `INVALID_FILE_TYPE` | The uploaded file is not a supported audio format | Use supported formats: MP3, WAV, FLAC, OGG, M4A, AAC |
-| 1104 | `UPLOAD_FAILED` | The file upload process failed | Check disk space, permissions, and file integrity |
-| 1105 | `DELETE_FAILED` | The file deletion process failed | Verify file exists and check filesystem permissions |
+```bash
+npm run build
+npm start
+```
 
-**Configuration Errors (1200-1299)**
+## Configuration
 
-| Code | Error | Description | Resolution |
-|------|-------|-------------|------------|
-| 1201 | `CONFIG_READ_ERROR` | Failed to read the `sounds.yaml` file | Check if `sounds.yaml` exists and is readable |
-| 1202 | `CONFIG_WRITE_ERROR` | Failed to write to the `sounds.yaml` file | Verify filesystem permissions and disk space |
-| 1203 | `CONFIG_PARSE_ERROR` | The `sounds.yaml` file contains invalid YAML | Fix YAML syntax errors in the configuration file |
-| 1204 | `CONFIG_VALIDATION_ERROR` | The configuration structure is invalid | Ensure the config follows the required schema |
+### Environment Variables
 
-**General Errors (1300-1399)**
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port | `3000` |
+| `ADMIN_PASSWORD` | Admin login password | Required |
+| `NEXT_PUBLIC_PRIMARY_COLOR` | Primary theme color | `hsl(222.2 47.4% 11.2%)` |
+| `NEXT_PUBLIC_BACKGROUND_COLOR` | Background color | `hsl(0 0% 100%)` |
+| `NEXT_PUBLIC_CARD_COLOR` | Card background color | `hsl(240 5.9% 90%)` |
+| `NEXT_PUBLIC_TEXT_COLOR` | Text color | `hsl(222.2 84% 4.9%)` |
 
-| Code | Error | Description | Resolution |
-|------|-------|-------------|------------|
-| 1301 | `INTERNAL_SERVER_ERROR` | An unexpected server error occurred | Check server logs for detailed error information |
-| 1302 | `METHOD_NOT_ALLOWED` | The HTTP method is not supported for this endpoint | Use the correct HTTP method (GET, POST, DELETE) |
-| 1303 | `BAD_REQUEST` | The request format or parameters are invalid | Verify request body, headers, and parameters |
+### Sounds Configuration
 
-##### **6.3. Common Issues & Solutions**
+Audio files and categories are managed through the `sounds.yaml` file:
 
-**Session/Authentication Issues**
-- **Problem**: Getting 401 errors after login
-- **Solution**: Check if cookies are enabled and `JWT_SECRET` is set in environment variables
+```yaml
+categories:
+  - name: Sound Effects
+    sounds:
+      - name: Button Click
+        file: click.wav
+      - name: Bell Ring
+        file: bell.mp3
+  - name: Music
+    sounds:
+      - name: Background Theme
+        file: theme.mp3
+```
 
-**File Upload Issues**
-- **Problem**: Upload fails with no clear error
-- **Solution**: Verify the `/public/audio/` directory exists and is writable
+## Usage
 
-**Configuration Issues**
-- **Problem**: Changes not persisting
-- **Solution**: Ensure the application has write permissions to the `sounds.yaml` file
+### Public Interface
 
-**Deployment Issues**
-- **Problem**: Application works locally but fails in production
-- **Solution**: Verify persistent filesystem support and environment variables are set
+1. Visit the main page to access the soundboard
+2. Click on any sound button to play audio
+3. Sounds are organized by categories in an accordion layout
 
-##### **6.4. Debugging Tips**
+### Admin Interface
 
-1. **Check Environment Variables**: Ensure all required environment variables are properly set
-2. **Verify File Permissions**: The application needs read/write access to `sounds.yaml` and `/public/audio/`
-3. **Monitor Browser Console**: Check for client-side errors and authentication issues
-4. **Review Server Logs**: Look for detailed error information in the server console
-5. **Test API Endpoints**: Use tools like Postman or curl to test API endpoints directly
+1. Navigate to `/admin` (no direct link from public interface for security)
+2. Log in with your admin password
+3. **Manage Sounds**: Add, edit, or remove sound entries
+4. **Upload Files**: Upload new audio files (.flac, .mp3, .wav)
+5. **Organize Categories**: Create and manage sound categories
+6. **Session Management**: Sessions expire after 24 hours
+
+### Supported Audio Formats
+
+- FLAC (.flac)
+- MP3 (.mp3) 
+- WAV (.wav)
+- Maximum file size: 2MB per file
+
+## API Endpoints
+
+### Public Endpoints
+- `GET /api/config` - Get sounds configuration
+
+### Admin Endpoints (Require Authentication)
+- `POST /api/auth/login` - Admin login
+- `POST /api/auth/logout` - Admin logout
+- `GET /api/auth/verify` - Verify session
+- `POST /api/config` - Update sounds configuration
+- `GET /api/audio-files` - List audio files
+- `POST /api/upload` - Upload audio files
+- `DELETE /api/audio-files` - Delete audio files
+
+## Security Features
+
+- **JWT Authentication**: Secure session management with HTTP-only cookies
+- **Password Protection**: Environment-based admin password
+- **File Upload Security**: Restricted file types and size limits
+- **Input Sanitization**: Filename sanitization for uploads
+- **Session Expiration**: 24-hour automatic session timeout
+
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+### Project Structure
+
+```
+/app
+  /api              # Backend API routes
+    /auth           # Authentication endpoints
+    /config         # Configuration management
+    /upload         # File upload handling
+    /audio-files    # Audio file management
+  /admin            # Admin interface page
+  /components       # Shared React components
+  layout.tsx        # Root layout with theming
+  page.tsx          # Public soundboard page
+/components
+  /ui               # shadcn/ui components
+/lib                # Utilities and types
+/public
+  /audio            # Audio file storage
+sounds.yaml         # Configuration file
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## Troubleshooting
+
+### Common Issues
+
+**Audio files not playing**:
+- Check file format (must be .flac, .mp3, or .wav)
+- Verify files exist in `/public/audio/`
+- Check browser console for errors
+
+**Admin login failing**:
+- Verify `ADMIN_PASSWORD` environment variable is set
+- Check for typos in password
+- Clear browser cookies and try again
+
+**Docker issues**:
+- Ensure volumes are properly mounted
+- Check file permissions on mounted directories
+- Verify environment variables are passed correctly
+
+### File Permissions
+
+When using Docker, ensure proper permissions:
+```bash
+# Make sure audio directory is writable
+chmod 755 public/audio
+chmod 644 sounds.yaml
+```
+
+## License
+
+This project is private and proprietary. All rights reserved.

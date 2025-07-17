@@ -1,24 +1,12 @@
 categories:
-  - name: Terry Davis
+  - name: Sounds
     sounds:
-      - name: Fool
-        file: Arrogant_fool.flac
-      - name: Birds want food
-        file: Birds_want_food.flac
-      - name: Cool
-        file: Coolest_thing.flac
-      - name: George Bush's Book
-        file: George_bush_book_sucked.flac
-      - name: Entertain God
-        file: Entertain_God_Full.flac
-      - name: The Chosen One
-        file: God_chooses_sperm.flac
-      - name: Sound of Silence
-        file: Hello_darkness_my_old_friend.flac
-      - name: That Book Sucks
-        file: God_that_book_sucked.flac
-      - name: Hey Mr Putin
-        file: Hey_mr_putin.flac
+      - name: Audio Clip 1
+        file: audio_clip_1.mp3
+      - name: Audio Clip 2
+        file: audio_clip_2.mp3
+      - name: Audio Clip 3
+        file: audio_clip_3.mp3
   - name: Effects
     sounds:
       - name: Beep

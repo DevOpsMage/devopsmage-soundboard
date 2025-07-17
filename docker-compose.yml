@@ -1,0 +1,27 @@
+services:
+  soundboard:
+    image: soundboard:latest
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-this-password}
+      NEXT_PUBLIC_PRIMARY_COLOR: ${NEXT_PUBLIC_PRIMARY_COLOR:-hsl(222.2 47.4% 11.2%)}
+      NEXT_PUBLIC_BACKGROUND_COLOR: ${NEXT_PUBLIC_BACKGROUND_COLOR:-hsl(0 0% 100%)}
+      NEXT_PUBLIC_CARD_COLOR: ${NEXT_PUBLIC_CARD_COLOR:-hsl(240 5.9% 90%)}
+      NEXT_PUBLIC_TEXT_COLOR: ${NEXT_PUBLIC_TEXT_COLOR:-hsl(222.2 84% 4.9%)}
+    volumes:
+      # Mount sounds.yaml configuration file
+      - ./sounds.yaml:/app/sounds.yaml
+      # Mount audio files directory for persistence
+      - ./public/audio:/app/public/audio
+      # Optional: Mount data directory for any additional persistent storage
+      - soundboard_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  soundboard_data:
+    driver: local
