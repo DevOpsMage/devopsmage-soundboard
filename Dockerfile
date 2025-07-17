@@ -17,6 +17,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Ensure public directory exists for the build
+RUN mkdir -p ./public/audio
+
 # Build the application
 RUN npm run build
 
@@ -31,7 +34,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy the public folder
+# Create public directory and copy contents if they exist
+RUN mkdir -p ./public/audio
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache
