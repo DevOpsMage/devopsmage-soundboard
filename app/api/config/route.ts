@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { parse, stringify } from 'yaml';
 import { getSessionFromRequest, getAuthErrorResponse } from '@/lib/session';
 import { SoundboardConfig, APIResponse, ERROR_CODES } from '@/lib/types';
 
-const CONFIG_PATH = join(process.cwd(), 'sounds.yaml');
-const BACKUP_PATH = join(process.cwd(), 'sounds.yaml.bak');
+// Ensure data directory exists, create if not present
+const dataDir = join(process.cwd(), 'data');
+if (!existsSync(dataDir)) {
+  mkdirSync(dataDir, { recursive: true });
+}
+
+// Initialize configuration file location
+const dataPath = join(process.cwd(), 'data', 'sounds.yaml');
+const rootPath = join(process.cwd(), 'sounds.yaml');
+
+// If data directory exists but no sounds.yaml in it, copy from root
+if (existsSync(dataDir) && !existsSync(dataPath) && existsSync(rootPath)) {
+  copyFileSync(rootPath, dataPath);
+}
+
+// Use data directory if it exists, otherwise fallback to root
+const CONFIG_PATH = existsSync(dataDir) ? dataPath : rootPath;
+const BACKUP_PATH = existsSync(dataDir) ? 
+  join(process.cwd(), 'data', 'sounds.yaml.bak') : 
+  join(process.cwd(), 'sounds.yaml.bak');
 
 export async function GET(): Promise<NextResponse<APIResponse<SoundboardConfig>>> {
   try {

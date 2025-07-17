@@ -49,6 +49,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Create directory for persistent data and set permissions
 RUN mkdir -p /app/data/audio
+COPY --chown=nextjs:nodejs sounds.yaml /app/data/sounds.yaml
 RUN chown -R nextjs:nodejs /app/data
 
 USER nextjs
