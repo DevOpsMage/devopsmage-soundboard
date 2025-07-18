@@ -31,8 +31,8 @@ ENV NODE_ENV=production
 # Disable telemetry during runtime.
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install curl for health checks and su-exec for proper user switching
+RUN apk add --no-cache curl su-exec
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -45,6 +45,9 @@ COPY --from=builder /app/public ./public
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
+# Set proper ownership of public directory
+RUN chown -R nextjs:nodejs ./public
+
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -55,7 +58,9 @@ RUN mkdir -p /app/data/audio
 COPY --chown=nextjs:nodejs sounds.yaml /app/data/sounds.yaml
 RUN chown -R nextjs:nodejs /app/data
 
-USER nextjs
+# Copy entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 3001
 
@@ -63,4 +68,5 @@ ENV PORT=3001
 # Set hostname to listen on all available IPv4 addresses
 ENV HOSTNAME="0.0.0.0"
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["node", "server.js"]
