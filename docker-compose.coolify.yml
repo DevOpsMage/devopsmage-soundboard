@@ -6,8 +6,8 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     environment:
       PORT: 3001
       HOSTNAME: "0.0.0.0"
@@ -32,6 +32,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    labels:
+      # Override Caddy configuration to work with Next.js
+      - "caddy_0.reverse_proxy={{upstreams 3001}}"
+      - "caddy_0.header.-Server="
+      - "caddy_0.encode=zstd gzip"
 
 volumes:
   audio_files:

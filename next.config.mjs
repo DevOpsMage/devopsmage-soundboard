@@ -20,10 +20,12 @@ const nextConfig = {
       },
     ];
   },
-  // Trust reverse proxy headers
+  // Trust reverse proxy headers  
   poweredByHeader: false,
   // Handle trailing slashes consistently
   trailingSlash: false,
+  // Ensure proper base path handling
+  basePath: '',
 };
 
 export default nextConfig;
