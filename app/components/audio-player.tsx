@@ -34,7 +34,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       audioRef.current.currentTime = 0;
     }
 
-    const audio = new Audio(`/audio/${soundFile}`);
+    const audio = new Audio(`/api/audio/${soundFile}`);
     audio.volume = isMuted ? 0 : volume / 100;
     audioRef.current = audio;
     
