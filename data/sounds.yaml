@@ -1,0 +1,15 @@
+categories:
+  - name: Sounds
+    sounds:
+      - name: Audio Clip 1
+        file: audio_clip_1.mp3
+      - name: Audio Clip 2
+        file: audio_clip_2.mp3
+      - name: Audio Clip 3
+        file: audio_clip_3.mp3
+  - name: Effects
+    sounds:
+      - name: Beep
+        file: beep.wav
+      - name: Click
+        file: click.wav

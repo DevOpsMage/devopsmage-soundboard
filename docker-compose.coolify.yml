@@ -13,6 +13,8 @@ services:
       HOSTNAME: "0.0.0.0"
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: 1
+      # Trust reverse proxy headers
+      TRUST_PROXY: 1
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       NEXT_PUBLIC_PRIMARY_COLOR: ${NEXT_PUBLIC_PRIMARY_COLOR:-hsl(222.2 47.4% 11.2%)}
       NEXT_PUBLIC_BACKGROUND_COLOR: ${NEXT_PUBLIC_BACKGROUND_COLOR:-hsl(0 0% 100%)}
@@ -25,7 +27,7 @@ services:
       - audio_files:/app/public/audio
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

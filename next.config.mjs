@@ -6,6 +6,24 @@ const nextConfig = {
     },
   },
   output: 'standalone',
+  // Ensure proper handling of reverse proxy headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
+    ];
+  },
+  // Trust reverse proxy headers
+  poweredByHeader: false,
+  // Handle trailing slashes consistently
+  trailingSlash: false,
 };
 
 export default nextConfig;
