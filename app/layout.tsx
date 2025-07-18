@@ -17,6 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script defer src="https://stats.devopsmage.dev/script.js" data-website-id="388ba162-266d-47f4-8c0a-c9fdf35177d9"></script>
+      </head>
       <body className={inter.className}>
         <ThemeProvider>
           {children}
